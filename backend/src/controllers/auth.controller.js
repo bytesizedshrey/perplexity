@@ -1,6 +1,6 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
-import userModel from '../models/user.model';
+import userModel from '../models/user.model.js';
 
 export async function registerUserController(req, res) {
     

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const bcrypt = require('bcrypt');
+const bcrypt = import('bcrypt');
 
 const userSchema = new mongoose.Schema(
     {
@@ -51,8 +51,8 @@ userSchema.pre('save',async function(next) {
     next();
 });
 //verifying
-userSchema.method.comparePassword = function (candidatePassword){
-    return bcrypt.compare(candidatePassword, this.password)
+userSchema.methods.comparePassword = async function (candidatePassword){
+    return await bcrypt.compare(candidatePassword, this.password)
 }
 
 const userModel = mongoose.model("user", userSchema)

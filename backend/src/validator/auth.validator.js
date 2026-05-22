@@ -1,5 +1,5 @@
 import {body} from 'express-validator'
-import { validator } from '../middlewares/validator.middleware';
+import { validator } from '../middlewares/validator.middleware.js';
 
 export const registerValidator = [
     body('fullname')
