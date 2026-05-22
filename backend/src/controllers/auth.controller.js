@@ -23,7 +23,7 @@ export async function registerUserController(req, res) {
   await sendEmail({
     to: email,
     subject: "Welcome to Perplexity",
-    html: `<p>hey ${user}, welcome to perplexity ✨</p>
+    html: `<p>hey ${user.fullname}, welcome to perplexity ✨</p>
 <p>you're officially in. no cap, we're hyped to have you here.</p>
 <p>time to unlock some knowledge and slay your curiosity. let's get it 💅</p>
 <p>— the perplexity crew</p>`,
