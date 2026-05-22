@@ -9,6 +9,7 @@ const connectToDB = async () => {
         console.error(`DB connection error : `,error.message)
         process.exit(1) //exit if DB fails
     }
+
 }
 
 export default connectToDB

@@ -11,4 +11,8 @@ const PORT = process.env.PORT || 8000
 
 app.listen(3000,()=>{
     console.log("server is running on port 3000")
+
+// console.log(process.env.GOOGLE_USER)
+// console.log(process.env.GOOGLE_CLIENT_ID)
+// console.log(process.env.GOOGLE_REFRESH_TOKEN)
 })

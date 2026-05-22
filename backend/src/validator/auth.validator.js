@@ -8,7 +8,7 @@ export const registerValidator = [
     .withMessage('fullname is required')
     .isLength({min : 3})
     .withMessage('fullName must be atleast 3 characters')
-    .matches(/^[a-zA-Z\-]+$/).withMessage('username can only contain letters,numbers and underscores')
+    // .matches(/^[a-zA-Z\-]+$/).withMessage('username can only contain letters,numbers and underscores')
     ,
 
     body('email')
