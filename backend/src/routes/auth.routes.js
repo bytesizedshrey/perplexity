@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { registerValidator } from "../validator/auth.validator.js";
+import { registerValidator, loginValidator } from "../validator/auth.validator.js";
 import {
   registerUserController,
   verifyEmailController,
+  loginUserController
+
 } from "../controllers/auth.controller.js";
 
 const authRouter = Router();
@@ -20,6 +22,23 @@ authRouter.post(
   registerUserController, //contoller
 );
 
+/**
+ * @routes POST /api/auth/login
+ * @description Login user
+ * @access Public
+ * @body {email,password}
+ */
+authRouter.post('/login',
+    loginValidator,
+    loginUserController)
+
+
+/**
+ * @routes POST /api/auth/verify-email
+ * @description verify email
+ * @access Public
+ * @query {token}
+ */
 authRouter.get("/verify-email", verifyEmailController);
 
 export default authRouter;
