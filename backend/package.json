@@ -12,6 +12,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@google/genai": "^2.6.0",
+    "@langchain/google-genai": "^2.1.31",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -19,6 +21,7 @@
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
+    "langchain": "^1.4.2",
     "mongoose": "^9.6.2",
     "nodemailer": "^8.0.7"
   }

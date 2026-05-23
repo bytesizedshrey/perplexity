@@ -1,18 +1,16 @@
-import dotenv from "dotenv"
-import app from './src/app.js'
-import connectToDB from './src/config/database.js'
-// import { configDotenv } from 'dotenv';
-
+import dotenv from "dotenv";
 dotenv.config();
 
-connectToDB()
+import app from "./src/app.js";
+import connectToDB from "./src/config/database.js";
+import { testAi } from "./src/services/ai.service.js";
 
-const PORT = process.env.PORT || 8000
+connectToDB();
 
-app.listen(3000,()=>{
-    console.log("server is running on port 3000")
+const PORT = process.env.PORT || 3000;
 
-// console.log(process.env.GOOGLE_USER)
-// console.log(process.env.GOOGLE_CLIENT_ID)
-// console.log(process.env.GOOGLE_REFRESH_TOKEN)
-})
+app.listen(PORT, async () => {
+  console.log(`server is running on port ${PORT}`);
+
+  await testAi();
+});
