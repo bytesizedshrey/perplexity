@@ -4,39 +4,123 @@ import userModel from "../models/user.model.js";
 import { sendEmail } from "../services/mail.service.js";
 
 export async function registerUserController(req, res) {
-  const { fullname,username, email, password } = req.body;
+  try {
+    const { fullname, username, email, password } = req.body;
 
-  const isUserAlreadyExists = await userModel.findOne({
-    $or: [{ email }, { username }],
-  });
+    const isUserAlreadyExists = await userModel.findOne({
+      $or: [{ email }, { username }],
+    });
 
-  if (isUserAlreadyExists) {
-    return res.status(400).json({
-      message: "user already exists with this username or maybe email",
+    if (isUserAlreadyExists) {
+      return res.status(400).json({
+        message: "User already exists with this username or email",
+        success: false,
+      });
+    }
+
+    const user = await userModel.create({
+      fullname,
+      username,
+      email,
+      password,
+    });
+
+    const emailVerificationToken = jwt.sign(
+      {
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    await sendEmail({
+      to: email,
+      subject: "Welcome to Perplexity",
+      html: `
+      <p>Hey ${user.fullname}, welcome to Perplexity ✨</p>
+      <p>You're officially in.</p>
+
+      <p>Verify your email:</p>
+
+      <a href="http://localhost:3000/api/auth/verify-email?token=${emailVerificationToken}">
+        Verify Email
+      </a>
+      `,
+    });
+
+    res.status(201).json({
+      message: "User registered successfully",
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
       success: false,
-      error: "user already exists",
+      message: "Internal server error",
     });
   }
-
-  const user = await userModel.create({ fullname,username, email, password });
-
-  await sendEmail({
-    to: email,
-    subject: "Welcome to Perplexity",
-    html: `<p>hey ${user.fullname}, welcome to perplexity ✨</p>
-<p>you're officially in. no cap, we're hyped to have you here.</p>
-<p>time to unlock some knowledge and slay your curiosity. let's get it 💅</p>
-<p>— the perplexity crew</p>`,
-  });
-
-res.status(201).json({
-    message : "user registered successfully",
-    success : true,
-    user : {
-        id : user._id,
-        username : user.username,
-        email : user.email
-    }
-})
 }
 
+export async function verifyEmailController(req, res) {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({
+        message: "Token missing",
+        success: false,
+      });
+    }
+
+    // Decode token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    // Find user
+    const user = await userModel.findOne({
+      email: decoded.email,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid token",
+        success: false,
+      });
+    }
+
+    // Already verified check
+    if (user.verified) {
+      return res.send(`
+        <h1>Email Already Verified</h1>
+        <p>You can login now.</p>
+      `);
+    }
+
+    // Verify user
+    user.verified = true;
+    await user.save();
+
+    res.send(`
+      <h1>Email Verified Successfully.</h1>
+      <p>Your email has been verified. You can now log in.</p>
+      <a href="http://localhost:3000/login">Go To Login</a>
+    `);
+  } catch (error) {
+    console.log(error);
+
+    return res.status(400).json({
+      message: "Invalid or expired token",
+      success: false,
+    });
+  }
+}

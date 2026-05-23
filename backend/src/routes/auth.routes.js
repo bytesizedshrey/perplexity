@@ -1,8 +1,11 @@
-import {Router} from 'express'
-import { registerValidator } from '../validator/auth.validator.js';
-import { registerUserController } from '../controllers/auth.controller.js';
+import { Router } from "express";
+import { registerValidator } from "../validator/auth.validator.js";
+import {
+  registerUserController,
+  verifyEmailController,
+} from "../controllers/auth.controller.js";
 
-const authRouter = Router()
+const authRouter = Router();
 
 /**
  * @routes POST /api/auth/register
@@ -11,9 +14,12 @@ const authRouter = Router()
  * @body {username,email,password}
  * @returns {user : {id,username,email},token}
  */
-authRouter.post('/register',
-    registerValidator, //validator
-    registerUserController, //contoller
-)
+authRouter.post(
+  "/register",
+  registerValidator, //validator
+  registerUserController, //contoller
+);
+
+authRouter.get("/verify-email", verifyEmailController);
 
 export default authRouter;
