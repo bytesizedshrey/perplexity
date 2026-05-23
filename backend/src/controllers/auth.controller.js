@@ -118,6 +118,28 @@ export async function loginUserController(req,res) {
   })
 }
 
+export async function getMeController(req,res) {
+  const userId = req.user.id
+
+  const user = await userModel.findById(userId).select("-password")
+
+  if(!user){
+    return res.status(404).json({
+      message : "User not Found",
+      success : false,
+      err : "User Not Found"
+    })
+  }
+
+  res.status(200).json({
+    message : "User details fetched successfully",
+    success : true,
+    user
+  })
+
+
+}
+
 export async function verifyEmailController(req, res) {
   try {
     const { token } = req.query;

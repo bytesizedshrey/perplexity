@@ -3,9 +3,12 @@ import { registerValidator, loginValidator } from "../validator/auth.validator.j
 import {
   registerUserController,
   verifyEmailController,
-  loginUserController
+  loginUserController,
+  getMeController
 
 } from "../controllers/auth.controller.js";
+import { authUser } from "../middlewares/auth.middleware.js";
+
 
 const authRouter = Router();
 
@@ -32,6 +35,12 @@ authRouter.post('/login',
     loginValidator,
     loginUserController)
 
+ /**
+ * @routes POST /api/auth/get-me
+ * @description get current logged in user's details
+ * @access Private
+ */
+authRouter.post('/get-me',authUser,getMeController)
 
 /**
  * @routes POST /api/auth/verify-email
