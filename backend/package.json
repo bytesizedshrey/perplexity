@@ -17,6 +17,7 @@
     "@langchain/mistralai": "^1.1.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
+    "cord": "^1.0.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -24,6 +25,7 @@
     "jsonwebtoken": "^9.0.3",
     "langchain": "^1.4.2",
     "mongoose": "^9.6.2",
+    "morgan": "^1.10.1",
     "nodemailer": "^8.0.7"
   }
 }
