@@ -40,7 +40,7 @@ authRouter.post('/login',
  * @description get current logged in user's details
  * @access Private
  */
-authRouter.post('/get-me',authUser,getMeController)
+authRouter.get('/get-me',authUser,getMeController)
 
 /**
  * @routes POST /api/auth/verify-email
