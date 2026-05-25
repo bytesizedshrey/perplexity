@@ -1,14 +1,23 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, Navigate, useNavigate } from 'react-router'
 import { useAuth } from '../hook/useAuth';
+import { useSelector } from 'react-redux';
 
 const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+    const user = useSelector(state => state.auth.user)
+    const loading = useSelector(state => state.auth.loading)
+
   const { handleLogin } = useAuth(); // moved inside component
   const navigate = useNavigate()
 
+    // stop logged in users from accessing login page
+    if (!loading && user) {
+      return <Navigate to="/" replace />
+    }
+  
   const submitForm = async (event) => {
     event.preventDefault()
 
