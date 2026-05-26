@@ -7,35 +7,58 @@ import {
 
 export async function sendMessage(req, res) {
   try {
-    const { message } = req.body;
+    const { message, chat: chatId } = req.body;
 
-    const title = await generateChatTitle(message);
-    console.log(title);
+    let title = null;
+    let chat = null;
 
-    const result = await generateResponse(message);
+    // Create new chat if no chatId
+    if (!chatId) {
+      title = await generateChatTitle(message);
 
-    // create chat
-    const chat = await chatModel.create({
-      user: req.user.id || req.user._id,
-      title,
+      chat = await chatModel.create({
+        user: req.user.id,
+        title,
+      });
+    } else {
+      // Existing chat
+      chat = await chatModel.findById(chatId);
+
+      if (!chat) {
+        return res.status(404).json({
+          message: "Chat not found",
+        });
+      }
+    }
+
+    // Get previous messages
+    const messages = await messageModel.find({
+      chat: chat._id,title
     });
 
-    // save user message
+    console.log(messages)
+
+    // Generate AI response
+    const result = await generateResponse(message, messages);
+
+    // Save user message
     const userMessage = await messageModel.create({
-        chat: chat._id,
-        content: message,
-        sender: "user",
-      });
-      
-      const aiMessage = await messageModel.create({
-        chat: chat._id,
-        content: result,
-        sender: "ai",
-      });
+      chat: chat._id,
+      content: message,
+      sender: "user",
+    });
+
+    // Save AI message
+    const aiMessage = await messageModel.create({
+      chat: chat._id,
+      content: result,
+      sender: "ai", // use this if schema enum = ["user", "assistant"]
+    });
 
     return res.status(201).json({
+      success: true,
       aiMessage: result,
-      title,
+      title: chat.title,
       chat,
       userMessage,
       aiMessageDoc: aiMessage,
