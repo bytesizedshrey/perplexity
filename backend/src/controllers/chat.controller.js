@@ -33,7 +33,7 @@ export async function sendMessage(req, res) {
 
     // Get previous messages
     const messages = await messageModel.find({
-      chat: chat._id,title
+      chat: chat._id
     });
 
     console.log(messages)
@@ -66,6 +66,67 @@ export async function sendMessage(req, res) {
   } catch (error) {
     console.error(error);
 
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
+export async function getChats(req , res) {
+    const user = req.user
+
+    const chats = await chatModel.find({user : user.id})
+
+    res.status(200).json({
+        message : 'chats retrieved successfully.',chats
+    })
+}
+
+export async function getMessages(req,res) {
+    const {chatId} = req.params
+
+    const chat = await chatModel.findOne({
+        _id: chatId,
+        user : req.user.id
+    })
+
+    if(!chat){
+        return res.status(404).json({
+            message : 'chat not found'
+        })
+    }
+    const messages = await messageModel.find({chat : chatId})
+
+    res.status(200).json({
+        message : "message retrieved successfully",
+        messages
+    })
+}
+
+export async function deleteChat(req, res) {
+  try {
+    const { chatId } = req.params;
+
+    const chat = await chatModel.findOneAndDelete({
+      _id: chatId,
+      user: req.user.id,
+    });
+
+    if (!chat) {
+      return res.status(404).json({
+        message: "Chat not found or unauthorized",
+      });
+    }
+
+    // Delete all messages associated with this chat
+    await messageModel.deleteMany({ chat: chatId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Chat and its associated messages deleted successfully.",
+    });
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: error.message,
     });

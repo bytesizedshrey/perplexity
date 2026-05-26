@@ -57,3 +57,8 @@ export async function generateChatTitle(message) {
   // Return generated title
   return response.content;
 }
+
+export async function testAi() {
+  const testResult = await generateChatTitle("test connection");
+  console.log("AI service startup test passed. Title response:", testResult);
+}

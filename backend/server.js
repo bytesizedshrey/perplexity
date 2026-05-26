@@ -5,7 +5,7 @@ import http from "http";
 import app from "./src/app.js";
 import connectDB from "./src/config/database.js";
 import { initSocket } from "./src/sockets/server.socket.js";
-// import { testAi } from "./src/services/ai.service.js";
+import { testAi } from "./src/services/ai.service.js";
 
 const PORT = process.env.PORT || 8000;
 
