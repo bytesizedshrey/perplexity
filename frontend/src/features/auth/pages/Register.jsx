@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, Navigate, useNavigate } from 'react-router'
+import { useAuth } from '../hook/useAuth';
+import { useSelector } from 'react-redux';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -8,9 +10,20 @@ const Register = () => {
     password: ''
   })
 
-  const submitForm = (event) => {
+  const user = useSelector(state => state.auth.user)
+  const loading = useSelector(state => state.auth.loading)
+  const { handleRegister } = useAuth()
+  const navigate = useNavigate()
+
+  // stop logged in users from accessing register page
+  if (!loading && user) {
+    return <Navigate to="/" replace />
+  }
+
+  const submitForm = async (event) => {
     event.preventDefault()
-    console.log('Register form submitted', formData)
+    await handleRegister(formData)
+    navigate('/')
   }
 
   const handleChange = (event) => {
@@ -19,57 +32,57 @@ const Register = () => {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-[#050505] text-white"
-      style={{
-        backgroundColor: '#050505',
-        backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.12) 1.5px, transparent 1.5px)',
-        backgroundSize: '24px 24px'
-      }}
-    >
-      <div className="w-full max-w-md rounded-[2rem] border border-slate-700/70 bg-slate-950/95 p-8 shadow-[0_32px_120px_rgba(0,0,0,0.6)]">
+    <div className="min-h-screen w-screen flex items-center justify-center dot-matrix-bg text-neutral-200 relative overflow-hidden terminal-grid">
+      <div className="scanning-line"></div>
+      <div className="w-full max-w-md rounded-2xl border border-neutral-800 bg-black/90 p-8 shadow-[0_0_80px_rgba(255,255,255,0.02)] relative z-20 backdrop-blur-md dot-matrix-panel">
         <div className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Create an account</p>
-          <h1 className="mt-4 text-3xl font-semibold text-white">Register</h1>
-          <p className="mt-2 text-sm text-slate-400">Enter your details to get started.</p>
+          <p className="text-xs uppercase tracking-[0.4em] text-neutral-500 font-mono">
+            // REGISTER_NEW_NODE
+          </p>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-white font-mono uppercase">
+            Register
+          </h1>
+          <p className="mt-2 text-xs font-mono text-neutral-500 font-semibold">
+            Create user credentials to access network.
+          </p>
         </div>
 
-        <div className="mb-6 text-center text-sm text-slate-400">
-          <span>Already have an account? </span>
-          <Link to="/login" className="text-slate-200 underline hover:text-white transition">
+        <div className="mb-6 text-center text-xs font-mono text-neutral-400">
+          <span>Already registered? </span>
+          <Link to="/login" className="text-white underline hover:text-neutral-300 transition-colors">
             Sign in
           </Link>
         </div>
 
         <form onSubmit={submitForm} className="space-y-6">
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">Username</span>
+            <span className="mb-2 block text-xs font-mono uppercase tracking-wider text-neutral-400">Username</span>
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
               required
-              placeholder="your username"
-              className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-600"
+              placeholder="operator_name"
+              className="w-full rounded-lg border border-neutral-800 bg-neutral-950/80 px-4 py-3 font-mono text-sm text-white placeholder:text-neutral-700 outline-none transition focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
             />
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">Email</span>
+            <span className="mb-2 block text-xs font-mono uppercase tracking-wider text-neutral-400">Email</span>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               required
-              placeholder="you@example.com"
-              className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-600"
+              placeholder="operator@network.local"
+              className="w-full rounded-lg border border-neutral-800 bg-neutral-950/80 px-4 py-3 font-mono text-sm text-white placeholder:text-neutral-700 outline-none transition focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
             />
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">Password</span>
+            <span className="mb-2 block text-xs font-mono uppercase tracking-wider text-neutral-400">Password</span>
             <input
               type="password"
               name="password"
@@ -77,15 +90,16 @@ const Register = () => {
               onChange={handleChange}
               required
               placeholder="••••••••"
-              className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-600"
+              className="w-full rounded-lg border border-neutral-800 bg-neutral-950/80 px-4 py-3 font-mono text-sm text-white placeholder:text-neutral-700 outline-none transition focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
             />
           </label>
 
           <button
             type="submit"
-            className="w-full rounded-3xl bg-gradient-to-r from-slate-800 via-slate-900 to-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-white transition hover:brightness-110"
+            disabled={loading}
+            className="w-full rounded-lg py-3.5 text-xs font-bold uppercase tracking-wider dot-matrix-btn disabled:opacity-50"
           >
-            Create Account
+            {loading ? "Registering..." : "Generate Identity"}
           </button>
         </form>
       </div>

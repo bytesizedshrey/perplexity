@@ -31,56 +31,49 @@ const Login = () => {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-[#050505] text-white"
-      style={{
-        backgroundColor: '#050505',
-        backgroundImage:
-          'radial-gradient(circle, rgba(148,163,184,0.12) 1.5px, transparent 1.5px)',
-        backgroundSize: '24px 24px',
-      }}
-    >
-      <div className="w-full max-w-md rounded-[2rem] border border-slate-700/70 bg-slate-950/95 p-8 shadow-[0_32px_120px_rgba(0,0,0,0.6)]">
+    <div className="min-h-screen w-screen flex items-center justify-center dot-matrix-bg text-neutral-200 relative overflow-hidden terminal-grid">
+      <div className="scanning-line"></div>
+      <div className="w-full max-w-md rounded-2xl border border-neutral-800 bg-black/90 p-8 shadow-[0_0_80px_rgba(255,255,255,0.02)] relative z-20 backdrop-blur-md dot-matrix-panel">
         <div className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-500">
-            Secure login
+          <p className="text-xs uppercase tracking-[0.4em] text-neutral-500 font-mono">
+            // SECURE_LOGIN_GATEWAY
           </p>
-          <h1 className="mt-4 text-3xl font-semibold text-white">
-            Welcome back
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-white font-mono uppercase">
+            Sign In
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Enter your email and password to continue.
+          <p className="mt-2 text-xs font-mono text-neutral-500 font-semibold">
+            Authorization required to establish connection.
           </p>
         </div>
 
-        <div className="mb-6 text-center text-sm text-slate-400">
-          <span>New here? </span>
+        <div className="mb-6 text-center text-xs font-mono text-neutral-400">
+          <span>First time connecting? </span>
           <Link
             to="/register"
-            className="text-slate-200 underline hover:text-white transition"
+            className="text-white underline hover:text-neutral-300 transition-colors"
           >
-            Create an account
+            Create credentials
           </Link>
         </div>
 
         <form onSubmit={submitForm} className="space-y-6">
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">
-              Email
+            <span className="mb-2 block text-xs font-mono uppercase tracking-wider text-neutral-400">
+              User Email
             </span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="you@example.com"
-              className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-600"
+              placeholder="operator@network.local"
+              className="w-full rounded-lg border border-neutral-800 bg-neutral-950/80 px-4 py-3 font-mono text-sm text-white placeholder:text-neutral-700 outline-none transition focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
             />
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">
-              Password
+            <span className="mb-2 block text-xs font-mono uppercase tracking-wider text-neutral-400">
+              Passkey
             </span>
             <input
               type="password"
@@ -88,15 +81,16 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••"
-              className="w-full rounded-3xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-600"
+              className="w-full rounded-lg border border-neutral-800 bg-neutral-950/80 px-4 py-3 font-mono text-sm text-white placeholder:text-neutral-700 outline-none transition focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500"
             />
           </label>
 
           <button
             type="submit"
-            className="w-full rounded-3xl bg-gradient-to-r from-slate-800 via-slate-900 to-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-white transition hover:brightness-110"
+            disabled={loading}
+            className="w-full rounded-lg py-3.5 text-xs font-bold uppercase tracking-wider dot-matrix-btn disabled:opacity-50"
           >
-            Sign In
+            {loading ? "Establishing Link..." : "Initialize Link"}
           </button>
         </form>
       </div>
