@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { setUser } from '../../auth/auth.slice'
 import { useChat } from '../hooks/useChat'
+import { DotmSpiral, DotmRipple, DotmDisplay } from '../../../components/DotMatrix'
 import axios from 'axios'
 
 const api = axios.create({
@@ -20,9 +21,11 @@ const Dashboard = () => {
   const [messages, setMessages] = useState([])
   const [messageText, setMessageText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
-  const [sysLog, setSysLog] = useState('SYSTEM READY - NODE STABLE')
+  const [sysLog, setSysLog] = useState('SYSTEM READY')
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const messagesEndRef = useRef(null)
+  const inputRef = useRef(null)
 
   // Socket setup
   useEffect(() => {
@@ -35,7 +38,7 @@ const Dashboard = () => {
   // Fetch all chats on load
   const fetchChats = async () => {
     try {
-      setSysLog('FETCHING CHAT SESSIONS...')
+      setSysLog('FETCHING SESSIONS...')
       const response = await api.get('/api/chats')
       if (response.data?.chats) {
         setChats(response.data.chats)
@@ -43,7 +46,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error(error)
-      setSysLog('ERROR: SYNC_FAILED')
+      setSysLog('ERR: SYNC_FAILED')
     }
   }
 
@@ -54,26 +57,25 @@ const Dashboard = () => {
   // Fetch messages for active chat
   const fetchMessages = async (chatId) => {
     try {
-      setSysLog(`DECRYPTING SESSION: ${chatId.substring(0, 8)}...`)
+      setSysLog(`LOADING SESSION...`)
       const response = await api.get(`/api/chats/${chatId}/messages`)
       if (response.data?.messages) {
         setMessages(response.data.messages)
-        setSysLog('LINK ESTABLISHED - ENCRYPTED')
+        setSysLog('SESSION ACTIVE')
       }
     } catch (error) {
       console.error(error)
-      setSysLog('ERROR: DECRYPTION_FAILED')
+      setSysLog('ERR: LOAD_FAILED')
     }
   }
 
-  // Handle active chat selection
   const handleSelectChat = (chat) => {
     setActiveChatId(chat._id)
     setActiveChatTitle(chat.title)
     fetchMessages(chat._id)
   }
 
-  // Scroll to bottom of chat
+  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isGenerating])
@@ -86,9 +88,8 @@ const Dashboard = () => {
     const inputMsg = messageText
     setMessageText('')
     setIsGenerating(true)
-    setSysLog('TRANSMITTING PACKETS...')
+    setSysLog('TRANSMITTING...')
 
-    // Optimistically add user message to list
     const tempUserMsg = {
       _id: Date.now().toString(),
       sender: 'user',
@@ -107,41 +108,32 @@ const Dashboard = () => {
         const { chat: newChat, aiMessageDoc } = response.data
 
         if (!activeChatId) {
-          // New chat was created
           setActiveChatId(newChat._id)
           setActiveChatTitle(newChat.title)
-          // Add the AI response message
-          setMessages((prev) => {
-            // Remove the temporary message and append the correct DB docs
-            return [
-              ...prev.filter((m) => m._id !== tempUserMsg._id),
-              response.data.userMessage,
-              aiMessageDoc,
-            ]
-          })
+          setMessages((prev) => [
+            ...prev.filter((m) => m._id !== tempUserMsg._id),
+            response.data.userMessage,
+            aiMessageDoc,
+          ])
           fetchChats()
         } else {
-          // Existing chat
-          setMessages((prev) => {
-            return [
-              ...prev.filter((m) => m._id !== tempUserMsg._id),
-              response.data.userMessage,
-              aiMessageDoc,
-            ]
-          })
+          setMessages((prev) => [
+            ...prev.filter((m) => m._id !== tempUserMsg._id),
+            response.data.userMessage,
+            aiMessageDoc,
+          ])
         }
         setSysLog('TRANSMISSION COMPLETE')
       }
     } catch (error) {
       console.error(error)
-      setSysLog('ERROR: REFUSED_BY_HOST')
-      // Append system error warning to chat
+      setSysLog('ERR: TRANSMISSION_FAILED')
       setMessages((prev) => [
         ...prev,
         {
           _id: 'err-' + Date.now(),
           sender: 'ai',
-          content: '⚠️ System Error: Unable to complete transmission. Check link status.',
+          content: '⚠️ System Error: Unable to complete transmission. Check connection status.',
           createdAt: new Date().toISOString(),
         },
       ])
@@ -152,14 +144,14 @@ const Dashboard = () => {
 
   // Handle Delete Chat
   const handleDeleteChat = async (chatId, e) => {
-    e.stopPropagation() // prevent activating chat on delete click
-    if (!window.confirm('WARNING: Deleting this node will purge all records. Proceed?')) return
+    e.stopPropagation()
+    if (!window.confirm('WARNING: Deleting this session will purge all records. Proceed?')) return
 
     try {
-      setSysLog(`PURGING NODE: ${chatId.substring(0, 8)}`)
+      setSysLog(`PURGING SESSION...`)
       const response = await api.delete(`/api/chats/${chatId}`)
       if (response.data?.success) {
-        setSysLog('NODE PURGED SUCCESSFULLY')
+        setSysLog('SESSION PURGED')
         if (activeChatId === chatId) {
           setActiveChatId(null)
           setActiveChatTitle('')
@@ -169,66 +161,89 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error(error)
-      setSysLog('ERROR: PURGE_REFUSED')
+      setSysLog('ERR: PURGE_FAILED')
     }
   }
 
   // Handle Logout
   const handleLogout = () => {
-    // Clear token cookie
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    // Reset redux user state
     dispatch(setUser(null))
   }
 
-  return (
-    <div className="h-screen w-screen flex bg-black text-neutral-300 font-mono relative overflow-hidden terminal-grid dot-matrix-bg">
-      <div className="scanning-line"></div>
+  const suggestions = [
+    'Explain quantum physics in simple terms',
+    'Draft a system report on cybersec standards',
+    'Suggest code optimizations for my Node.js app',
+    'Generate a startup checklist for a SaaS product',
+  ]
 
-      {/* Sidebar - Chat Sessions List */}
-      <aside className="w-80 h-full border-r border-neutral-800 bg-black/95 flex flex-col z-20 relative backdrop-blur-md">
+  return (
+    <div className="h-screen w-screen flex bg-[#080808] text-neutral-300 font-mono relative overflow-hidden dot-matrix-bg terminal-grid">
+      <div className="scanning-line" />
+
+      {/* ── Sidebar ──────────────────────────────────────────────────────────── */}
+      <aside
+        className={`${sidebarOpen ? 'w-72' : 'w-0'} h-full border-r border-neutral-900 bg-[#080808]/98 flex flex-col z-20 relative backdrop-blur-xl overflow-hidden transition-all duration-300 ease-in-out shrink-0`}
+      >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-neutral-800 flex flex-col gap-2">
+        <div className="p-4 border-b border-neutral-900 flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <span className="text-white text-xs font-bold tracking-widest font-mono select-none">
-              // CORE_TERMINAL_V1
-            </span>
+            {/* Logo + Title */}
+            <div className="flex items-center gap-2.5">
+              <DotmDisplay size={22} dotSize={3} color="#737373" pattern="full" />
+              <span className="text-white text-[11px] font-bold tracking-widest select-none uppercase">
+                Core Terminal
+              </span>
+            </div>
             <button
               onClick={handleLogout}
-              className="text-[10px] text-neutral-500 hover:text-white px-2 py-0.5 border border-neutral-800 hover:border-neutral-500 rounded transition-colors font-mono select-none cursor-pointer"
+              className="text-[9px] text-neutral-600 hover:text-white px-2 py-1 border border-neutral-800 hover:border-neutral-600 rounded transition-all font-mono select-none cursor-pointer hover:bg-neutral-900"
             >
               LOGOUT
             </button>
           </div>
-          <div className="text-[10px] text-neutral-500 flex justify-between select-none">
-            <span>USER: <span className="text-neutral-300">{user?.username || 'GUEST'}</span></span>
-            <span className="animate-pulse">● ONLINE</span>
+
+          {/* User status */}
+          <div className="flex items-center justify-between px-0.5">
+            <div className="text-[10px] text-neutral-600 font-mono">
+              <span className="text-neutral-500">USER</span>{' '}
+              <span className="text-neutral-300 font-semibold">{user?.username || 'GUEST'}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-500 animate-pulse block" />
+              <span className="text-[9px] text-neutral-600 select-none">ONLINE</span>
+            </div>
           </div>
         </div>
 
         {/* New Session Button */}
-        <div className="p-4">
+        <div className="p-3.5">
           <button
+            id="new-session-btn"
             onClick={() => {
               setActiveChatId(null)
               setActiveChatTitle('')
               setMessages([])
-              setSysLog('INITIALIZED NEW CHAT NODE')
+              setSysLog('NEW SESSION INITIALIZED')
+              inputRef.current?.focus()
             }}
-            className="w-full py-3.5 text-xs font-bold uppercase rounded-lg border dot-matrix-btn select-none"
+            className="w-full py-3 text-[11px] font-bold uppercase rounded-lg border dot-matrix-btn tracking-widest select-none"
           >
-            + Create New Link
+            + New Session
           </button>
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-          <div className="text-[10px] text-neutral-600 font-bold uppercase tracking-wider mb-2 select-none">
-            [ active_nodes ]
+        <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1.5">
+          <div className="text-[9px] text-neutral-700 font-bold uppercase tracking-widest mb-2.5 px-1 select-none">
+            [ sessions ]
           </div>
+
           {chats.length === 0 ? (
-            <div className="text-center py-8 text-neutral-600 text-xs select-none">
-              NO ACTIVE LINKS
+            <div className="text-center py-10 space-y-3">
+              <DotmDisplay size={32} dotSize={4} color="#2a2a2a" pattern="diamond" className="mx-auto block" />
+              <p className="text-[10px] text-neutral-700 select-none">NO ACTIVE SESSIONS</p>
             </div>
           ) : (
             chats.map((chat) => {
@@ -239,41 +254,30 @@ const Dashboard = () => {
                   onClick={() => handleSelectChat(chat)}
                   className={`group w-full p-3 rounded-lg border text-left cursor-pointer transition-all duration-200 relative overflow-hidden ${
                     isActive
-                      ? 'bg-neutral-900 border-neutral-500 text-white shadow-[0_0_10px_rgba(255,255,255,0.05)]'
-                      : 'bg-neutral-950/80 border-neutral-900 hover:bg-neutral-900 hover:border-neutral-700 text-neutral-400 hover:text-neutral-200'
+                      ? 'bg-neutral-900/80 border-neutral-700 text-white shadow-[0_0_20px_rgba(255,255,255,0.03)] dot-matrix-panel'
+                      : 'bg-transparent border-neutral-900 hover:bg-neutral-900/40 hover:border-neutral-800 text-neutral-500 hover:text-neutral-300'
                   }`}
                 >
-                  {/* Subtle dot matrix grid on active node */}
-                  {isActive && (
-                    <div className="absolute inset-0 opacity-[0.03] dot-matrix-panel pointer-events-none"></div>
-                  )}
-
                   <div className="flex justify-between items-center relative z-10">
-                    <span className="text-xs truncate pr-2 max-w-[180px] font-semibold">
-                      {chat.title}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {isActive && (
+                        <span className="w-1 h-1 rounded-full bg-neutral-400 shrink-0 animate-pulse" />
+                      )}
+                      <span className="text-[11px] truncate font-medium">{chat.title}</span>
+                    </div>
                     <button
                       onClick={(e) => handleDeleteChat(chat._id, e)}
-                      className="text-neutral-600 hover:text-neutral-200 p-1 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
-                      title="Purge Node"
+                      className="opacity-0 group-hover:opacity-100 text-neutral-700 hover:text-neutral-300 p-1 rounded hover:bg-neutral-800 transition-all cursor-pointer shrink-0 ml-1"
+                      title="Delete session"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
-                  <div className="text-[9px] text-neutral-600 mt-1 select-none">
-                    ID: {chat._id.substring(0, 10)}...
+                  <div className="text-[9px] text-neutral-700 mt-1 select-none pl-3">
+                    {isActive ? '' : `ID: ${chat._id.substring(0, 8)}...`}
                   </div>
                 </div>
               )
@@ -282,88 +286,143 @@ const Dashboard = () => {
         </div>
 
         {/* Sidebar Status Footer */}
-        <div className="p-3 border-t border-neutral-800 bg-neutral-950 text-[10px] text-neutral-600 flex justify-between select-none">
-          <span>{sysLog}</span>
+        <div className="p-3 border-t border-neutral-900 flex items-center justify-between select-none">
+          <span className="text-[9px] text-neutral-700 truncate">{sysLog}</span>
+          <DotmDisplay size={14} dotSize={2} color="#333" pattern="cross" />
         </div>
       </aside>
 
-      {/* Main Area - Conversation Log */}
-      <main className="flex-1 h-full flex flex-col bg-black/98 z-10 relative">
+      {/* ── Main Area ─────────────────────────────────────────────────────────── */}
+      <main className="flex-1 h-full flex flex-col bg-[#060606]/98 z-10 relative min-w-0">
+
         {/* Chat Header */}
-        <header className="h-16 border-b border-neutral-800 px-6 flex justify-between items-center bg-black/90 backdrop-blur-md relative z-10 select-none">
+        <header className="h-14 border-b border-neutral-900 px-5 flex justify-between items-center bg-[#060606]/90 backdrop-blur-xl relative z-10 select-none shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-neutral-600 animate-pulse"></div>
-            <div>
-              <h2 className="text-white text-xs uppercase tracking-widest font-bold font-mono">
-                {activeChatId ? `SESSION: ${activeChatTitle}` : '// STANDBY_MODE'}
-              </h2>
-              <p className="text-[9px] text-neutral-600">
-                {activeChatId ? `NODE_ID: ${activeChatId}` : 'Awaiting host link initialization...'}
-              </p>
+            {/* Sidebar toggle */}
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="text-neutral-600 hover:text-neutral-300 p-1.5 rounded hover:bg-neutral-900 transition-all cursor-pointer"
+              title="Toggle sidebar"
+            >
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+              </svg>
+            </button>
+
+            <div className="w-px h-4 bg-neutral-900" />
+
+            <div className="flex items-center gap-2.5">
+              {activeChatId ? (
+                <DotmDisplay size={16} dotSize={2} color="#525252" pattern="full" />
+              ) : (
+                <span className="w-2 h-2 rounded-full border border-neutral-800 block" />
+              )}
+              <div>
+                {/* <h2 className="text-white text-[11px] uppercase tracking-widest font-bold leading-tight">
+                  {activeChatId ? activeChatTitle : '// STANDBY'}
+                </h2> */}
+                {activeChatId && (
+                  <p className="text-[9px] text-neutral-700 leading-tight">
+                    {activeChatId.substring(0, 16)}...
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="text-[10px] text-neutral-500 font-mono">
-            SYS_STATUS: <span className="text-neutral-300 font-semibold">{activeChatId ? 'COMM_LIVE' : 'STANDBY'}</span>
+          <div className="flex items-center gap-3">
+            {isGenerating && (
+              <div className="flex items-center gap-2">
+                <DotmSpiral size={18} dotSize={2} color="#525252" speed={2} pattern="full" animated />
+                <span className="text-[9px] text-neutral-600 tracking-widest">GENERATING</span>
+              </div>
+            )}
+            <span className="text-[9px] text-neutral-700 font-mono">
+              {activeChatId ? (
+                <span className="text-neutral-500">● ACTIVE</span>
+              ) : (
+                <span>○ STANDBY</span>
+              )}
+            </span>
           </div>
         </header>
 
-        {/* Messages Logger Container */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 min-h-0">
           {!activeChatId && messages.length === 0 ? (
-            /* System Welcome Dashboard */
-            <div className="h-full flex flex-col justify-center items-center text-center max-w-xl mx-auto space-y-6 select-none font-mono">
-              <div className="p-6 border border-neutral-800 bg-[#080808]/80 rounded-xl relative overflow-hidden max-w-lg shadow-[0_0_50px_rgba(255,255,255,0.01)] dot-matrix-panel">
-                <p className="text-xs uppercase tracking-[0.45em] text-neutral-500 font-bold">
+            /* Welcome Screen */
+            <div className="h-full flex flex-col justify-center items-center text-center max-w-lg mx-auto space-y-8 select-none">
+
+              {/* Hero dot matrix */}
+              <div className="relative flex flex-col items-center gap-5">
+                <DotmSpiral
+                  size={80}
+                  dotSize={10}
+                  color="#2a2a2a"
+                  speed={0.8}
+                  pattern="full"
+                  animated
+                  opacityBase={0.08}
+                  opacityMid={0.25}
+                  opacityPeak={0.9}
+                />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-3 h-3 rounded-full bg-neutral-700 animate-pulse" />
+                </div>
+              </div>
+
+              {/* Title card */}
+              <div className="p-7 border border-neutral-900 bg-neutral-950/60 rounded-2xl relative overflow-hidden max-w-sm w-full dot-matrix-panel shadow-[0_0_60px_rgba(255,255,255,0.015)]">
+                <p className="text-[9px] uppercase tracking-[0.5em] text-neutral-600 font-bold">
                   // HOST_READY
                 </p>
-                <h1 className="mt-4 text-xl font-bold text-white uppercase tracking-wider">
-                  Establish Neural Connection
+                <h1 className="mt-3 text-lg font-bold text-white uppercase tracking-wider leading-tight">
+                  Establish Neural<br />Connection
                 </h1>
-                <p className="mt-2 text-xs text-neutral-500 leading-relaxed font-semibold">
-                  Send a prompt below to launch a new generative agent connection. The AI will assist with diagnostics, queries, or analysis.
+                <p className="mt-3 text-[11px] text-neutral-600 leading-relaxed font-medium">
+                  Send a prompt below to launch a generative agent session.
                 </p>
               </div>
 
-              {/* Suggestions Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-                {[
-                  'Explain quantum physics like a Gen Z helper',
-                  'Draft a system report on cybersec standards',
-                  'Suggest code optimization for Node.js app',
-                  'Generate a startup prompt checklist',
-                ].map((promptText, i) => (
+              {/* Suggestion Grid */}
+              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+                {suggestions.map((promptText, i) => (
                   <button
                     key={i}
-                    onClick={() => setMessageText(promptText)}
-                    className="p-3 text-[11px] text-left border border-neutral-900 bg-neutral-950/80 hover:bg-neutral-900/60 hover:border-neutral-700 rounded-lg text-neutral-500 hover:text-white transition-all cursor-pointer font-mono"
+                    onClick={() => {
+                      setMessageText(promptText)
+                      inputRef.current?.focus()
+                    }}
+                    className="p-3 text-[10px] text-left border border-neutral-900 bg-neutral-950/60 hover:bg-neutral-900/60 hover:border-neutral-800 rounded-xl text-neutral-600 hover:text-neutral-300 transition-all cursor-pointer font-mono leading-relaxed"
                   >
-                    &gt; {promptText}
+                    <span className="text-neutral-700 mr-1">&gt;</span> {promptText}
                   </button>
                 ))}
               </div>
             </div>
           ) : (
             /* Messages List */
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div className="max-w-2xl mx-auto space-y-5 w-full">
               {messages.map((msg) => {
                 const isUser = msg.sender === 'user'
                 return (
-                  <div
-                    key={msg._id}
-                    className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
-                  >
-                    {/* Message Header Label */}
-                    <div className="text-[10px] text-neutral-600 mb-1.5 uppercase font-bold select-none">
-                      {isUser ? `[ USER_NODE ]` : `[ AGENT_RESPONSE ]`}
+                  <div key={msg._id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                    {/* Sender label */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {!isUser && (
+                        <DotmDisplay size={12} dotSize={1.5} color="#404040" pattern="diamond" />
+                      )}
+                      <span className="text-[9px] text-neutral-700 uppercase font-bold tracking-widest select-none">
+                        {isUser ? 'YOU' : 'AGENT'}
+                      </span>
                     </div>
 
-                    {/* Message Content */}
+                    {/* Bubble */}
                     <div
-                      className={`p-4 rounded-xl text-xs leading-relaxed max-w-[85%] border font-mono whitespace-pre-wrap ${
+                      className={`p-4 rounded-xl text-[12px] leading-relaxed max-w-[88%] font-mono whitespace-pre-wrap border message-content ${
                         isUser
-                          ? 'bg-neutral-950 border-neutral-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.01)]'
-                          : 'bg-[#0b0b0b]/90 border-neutral-900 text-neutral-300 shadow-[0_0_30px_rgba(255,255,255,0.02)]'
+                          ? 'bg-neutral-950 border-neutral-800 text-neutral-200 rounded-tr-sm'
+                          : 'bg-[#090909] border-neutral-900 text-neutral-400 rounded-tl-sm shadow-[0_0_40px_rgba(255,255,255,0.01)]'
                       }`}
                     >
                       {msg.content}
@@ -372,14 +431,28 @@ const Dashboard = () => {
                 )
               })}
 
-              {/* Generative / Thinking indicator */}
+              {/* AI Generating indicator */}
               {isGenerating && (
                 <div className="flex flex-col items-start">
-                  <div className="text-[10px] text-neutral-600 mb-1.5 uppercase font-bold select-none">
-                    [ AGENT_STATE ]
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <DotmSpiral size={12} dotSize={1.5} color="#525252" speed={2} animated />
+                    <span className="text-[9px] text-neutral-700 uppercase font-bold tracking-widest select-none">
+                      AGENT
+                    </span>
                   </div>
-                  <div className="p-4 rounded-xl text-xs leading-relaxed bg-[#0b0b0b] border border-neutral-950 text-neutral-500 font-mono italic animate-pulse">
-                    Thinking... [PACKETS_IN_TRANSIT]
+                  <div className="p-4 rounded-xl rounded-tl-sm bg-[#090909] border border-neutral-900 flex items-center gap-3">
+                    <DotmSpiral
+                      size={28}
+                      dotSize={4}
+                      color="#404040"
+                      speed={1.4}
+                      pattern="full"
+                      animated
+                      opacityBase={0.1}
+                      opacityMid={0.3}
+                      opacityPeak={0.85}
+                    />
+                    <span className="text-[11px] text-neutral-600 italic font-mono">Thinking...</span>
                   </div>
                 </div>
               )}
@@ -389,22 +462,32 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Input Bar Footer */}
-        <footer className="p-4 border-t border-neutral-800 bg-black/90 backdrop-blur-md relative z-20">
-          <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto flex gap-3">
+        {/* Input Footer */}
+        <footer className="p-4 border-t border-neutral-900 bg-[#060606]/90 backdrop-blur-xl relative z-20 shrink-0">
+          <form onSubmit={handleSendMessage} className="max-w-2xl mx-auto flex gap-2.5">
             <input
+              ref={inputRef}
+              id="chat-input"
               type="text"
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
-              placeholder="&gt; enter packet instructions..."
+              placeholder="> Enter prompt..."
               disabled={isGenerating}
-              className="flex-1 px-4 py-3.5 border border-neutral-800 bg-[#060606] text-xs font-mono text-white placeholder:text-neutral-700 outline-none transition focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 rounded-lg"
+              className="flex-1 px-4 py-3.5 border border-neutral-900 bg-neutral-950/80 text-[12px] font-mono text-white placeholder:text-neutral-700 outline-none transition focus:border-neutral-700 focus:ring-1 focus:ring-neutral-800 rounded-xl disabled:opacity-40"
             />
             <button
+              id="send-btn"
               type="submit"
               disabled={!messageText.trim() || isGenerating}
-              className="px-6 rounded-lg text-xs font-bold uppercase tracking-wider dot-matrix-btn disabled:opacity-30 select-none"
+              className="px-6 rounded-xl text-[11px] font-bold uppercase tracking-wider dot-matrix-btn select-none transition-all flex items-center gap-2"
             >
+              {isGenerating ? (
+                <DotmSpiral size={12} dotSize={1.5} color="#737373" speed={2} animated />
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+              )}
               SEND
             </button>
           </form>

@@ -1,71 +1,96 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
+/* ─── Design Tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --color-bg: #080808;
+  --color-surface: #0f0f0f;
+  --color-border: #1a1a1a;
+  --color-border-mid: #262626;
+  --color-border-bright: #404040;
+  --color-text-dim: #404040;
+  --color-text-mid: #737373;
+  --color-text: #a3a3a3;
+  --color-text-strong: #e5e5e5;
+  --color-white: #ffffff;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
 @layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    background-color: #000000;
-    color: #e2e8f0;
-    font-family: 'JetBrains Mono', monospace;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-mono);
     overflow-x: hidden;
+    min-height: 100dvh;
   }
 }
 
-/* Custom scrolling dot matrix background */
+/* ─── Dot-Matrix Background ─────────────────────────────────────────────────── */
 .dot-matrix-bg {
-  background-color: #000000;
-  background-image: 
-    radial-gradient(rgba(255, 255, 255, 0.07) 1.2px, transparent 1.2px);
-  background-size: 24px 24px;
-  animation: dotMatrixScroll 30s linear infinite;
+  background-color: var(--color-bg);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 22px 22px;
+  animation: dotMatrixScroll 40s linear infinite;
 }
 
 @keyframes dotMatrixScroll {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 240px 240px;
-  }
+  0%   { background-position: 0 0; }
+  100% { background-position: 220px 220px; }
 }
 
-/* Grid lines scanline overlay */
+/* ─── CRT Scanlines ─────────────────────────────────────────────────────────── */
 .terminal-grid {
   position: relative;
 }
+
 .terminal-grid::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
-  background-size: 100% 4px;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.12) 3px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
   pointer-events: none;
-  z-index: 10;
+  z-index: 5;
 }
 
-/* Button dot matrix hover effect */
+/* ─── Dot-Matrix Button ─────────────────────────────────────────────────────── */
 .dot-matrix-btn {
   position: relative;
   overflow: hidden;
   background-color: #0c0c0c;
-  border: 1px solid #262626;
-  color: #a3a3a3;
-  font-family: 'Share Tech Mono', monospace;
-  letter-spacing: 0.15em;
-  transition: all 0.2s ease-in-out;
+  border: 1px solid var(--color-border-mid);
+  color: var(--color-text-mid);
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease, box-shadow 0.2s ease;
   cursor: pointer;
-}
-
-.dot-matrix-btn:hover {
-  background-color: #171717;
-  color: #ffffff;
-  border-color: #737373;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.08);
 }
 
 .dot-matrix-btn::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.25) 0.8px, transparent 0);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 0.8px, transparent 0);
   background-size: 5px 5px;
   background-position: 0 0;
   opacity: 0;
@@ -73,58 +98,109 @@
   pointer-events: none;
 }
 
+.dot-matrix-btn:hover {
+  background-color: #141414;
+  color: var(--color-white);
+  border-color: var(--color-border-bright);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
 .dot-matrix-btn:hover::before {
   opacity: 1;
-  animation: dotMatrixFlicker 0.25s steps(4) infinite;
+  animation: dotMatrixFlicker 0.3s steps(4) infinite;
+}
+
+.dot-matrix-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 @keyframes dotMatrixFlicker {
-  0% { background-position: 0 0; }
-  25% { background-position: 2px 1px; }
-  50% { background-position: 1px 2px; }
-  75% { background-position: 3px 0px; }
+  0%   { background-position: 0 0; }
+  25%  { background-position: 2px 1px; }
+  50%  { background-position: 1px 2px; }
+  75%  { background-position: 3px 0px; }
   100% { background-position: 0 0; }
 }
 
-/* Dot matrix active panel background */
+/* ─── Dot-Matrix Panel (subtle grid texture on cards/panels) ─────────────────── */
 .dot-matrix-panel {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 0);
   background-size: 12px 12px;
 }
 
-/* Scanning line overlay */
+/* ─── Scanning Line ─────────────────────────────────────────────────────────── */
 .scanning-line {
   position: absolute;
   width: 100%;
-  height: 100%;
+  height: 120px;
   background: linear-gradient(
     to bottom,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.02) 10%,
-    rgba(255, 255, 255, 0) 20%
+    rgba(255, 255, 255, 0.015) 50%,
+    rgba(255, 255, 255, 0) 100%
   );
-  animation: scan 8s linear infinite;
+  animation: scan 10s linear infinite;
   pointer-events: none;
   z-index: 5;
 }
 
 @keyframes scan {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
+  0%   { transform: translateY(-120px); }
+  100% { transform: translateY(100vh); }
 }
 
-/* Custom scrollbars for black/grey design */
+/* ─── Glass Panel ───────────────────────────────────────────────────────────── */
+.glass-panel {
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Custom Scrollbar ──────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: var(--color-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #262626;
-  border-radius: 3px;
+  background: var(--color-border-mid);
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #404040;
+  background: var(--color-border-bright);
+}
+
+/* ─── Message formatting ───────────────────────────────────────────────────── */
+.message-content p {
+  margin-bottom: 0.6em;
+}
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+.message-content code {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+  font-size: 0.85em;
+  font-family: var(--font-mono);
+  color: #d4d4d4;
+}
+.message-content pre {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+.message-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
 }
