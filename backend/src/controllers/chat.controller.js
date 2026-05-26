@@ -33,7 +33,7 @@ export async function sendMessage(req, res) {
         sender: "ai",
       });
 
-    return res.json({
+    return res.status(201).json({
       aiMessage: result,
       title,
       chat,
