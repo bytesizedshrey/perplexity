@@ -6,10 +6,10 @@ import { useAuth } from '../features/auth/hook/useAuth';
 
 
 const App = () => {
-  const auth = useAuth()
+  const { handleGetMe } = useAuth()
   useEffect(()=>{
-    auth.handleGetMe()
-  },[])
+    handleGetMe()
+  }, [handleGetMe])
   return (
     <div>
       <RouterProvider router={router}/>

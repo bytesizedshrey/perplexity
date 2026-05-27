@@ -33,7 +33,7 @@ export async function sendMessage(req, res) {
 
     // Get previous messages
     const messages = await messageModel.find({
-      chat: chat._id
+      chat: chat._id || chatId
     });
 
     console.log(messages)
@@ -43,7 +43,7 @@ export async function sendMessage(req, res) {
 
     // Save user message
     const userMessage = await messageModel.create({
-      chat: chat._id,
+      chat: chat._id || chatId,
       content: message,
       sender: "user",
     });

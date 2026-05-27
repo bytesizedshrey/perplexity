@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { setUser } from '../../auth/auth.slice'
+import { setChats, setCurrentChatId } from '../chat.slice'
 import { useChat } from '../hooks/useChat'
-import { DotmSpiral, DotmRipple, DotmDisplay } from '../../../components/DotMatrix'
+import { DotmSpiral, DotmDisplay } from '../../../components/DotMatrix'
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: 'http://localhost:8000',
   withCredentials: true,
 })
 
@@ -15,8 +16,9 @@ const Dashboard = () => {
   const { user } = useSelector((state) => state.auth)
   const { initializeSocketConnection } = useChat()
 
-  const [chats, setChats] = useState([])
-  const [activeChatId, setActiveChatId] = useState(null)
+  const chats = useSelector((state) => state.chat.chats)
+  const currentChatId = useSelector((state) => state.chat.currentChatId)
+
   const [activeChatTitle, setActiveChatTitle] = useState('')
   const [messages, setMessages] = useState([])
   const [messageText, setMessageText] = useState('')
@@ -33,7 +35,7 @@ const Dashboard = () => {
     return () => {
       socket?.disconnect()
     }
-  }, [])
+  }, [initializeSocketConnection])
 
   // Fetch all chats on load
   const fetchChats = async () => {
@@ -41,7 +43,7 @@ const Dashboard = () => {
       setSysLog('FETCHING SESSIONS...')
       const response = await api.get('/api/chats')
       if (response.data?.chats) {
-        setChats(response.data.chats)
+        dispatch(setChats(response.data.chats))
         setSysLog('SESSIONS SYNCHRONIZED')
       }
     } catch (error) {
@@ -52,7 +54,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchChats()
-  }, [])
+  }, [dispatch])
 
   // Fetch messages for active chat
   const fetchMessages = async (chatId) => {
@@ -70,7 +72,7 @@ const Dashboard = () => {
   }
 
   const handleSelectChat = (chat) => {
-    setActiveChatId(chat._id)
+    dispatch(setCurrentChatId(chat._id))
     setActiveChatTitle(chat.title)
     fetchMessages(chat._id)
   }
@@ -101,14 +103,14 @@ const Dashboard = () => {
     try {
       const response = await api.post('/api/chats/message', {
         message: inputMsg,
-        chat: activeChatId,
+        chat: currentChatId,
       })
 
       if (response.data?.success) {
         const { chat: newChat, aiMessageDoc } = response.data
 
-        if (!activeChatId) {
-          setActiveChatId(newChat._id)
+        if (!currentChatId) {
+          dispatch(setCurrentChatId(newChat._id))
           setActiveChatTitle(newChat.title)
           setMessages((prev) => [
             ...prev.filter((m) => m._id !== tempUserMsg._id),
@@ -152,8 +154,8 @@ const Dashboard = () => {
       const response = await api.delete(`/api/chats/${chatId}`)
       if (response.data?.success) {
         setSysLog('SESSION PURGED')
-        if (activeChatId === chatId) {
-          setActiveChatId(null)
+        if (currentChatId === chatId) {
+          dispatch(setCurrentChatId(null))
           setActiveChatTitle('')
           setMessages([])
         }
@@ -222,7 +224,7 @@ const Dashboard = () => {
           <button
             id="new-session-btn"
             onClick={() => {
-              setActiveChatId(null)
+              dispatch(setCurrentChatId(null))
               setActiveChatTitle('')
               setMessages([])
               setSysLog('NEW SESSION INITIALIZED')
@@ -240,14 +242,14 @@ const Dashboard = () => {
             [ sessions ]
           </div>
 
-          {chats.length === 0 ? (
+          {!chats || chats.length === 0 ? (
             <div className="text-center py-10 space-y-3">
               <DotmDisplay size={32} dotSize={4} color="#2a2a2a" pattern="diamond" className="mx-auto block" />
               <p className="text-[10px] text-neutral-700 select-none">NO ACTIVE SESSIONS</p>
             </div>
           ) : (
             chats.map((chat) => {
-              const isActive = chat._id === activeChatId
+              const isActive = chat._id === currentChatId
               return (
                 <div
                   key={chat._id}
@@ -312,18 +314,18 @@ const Dashboard = () => {
             <div className="w-px h-4 bg-neutral-900" />
 
             <div className="flex items-center gap-2.5">
-              {activeChatId ? (
+              {currentChatId ? (
                 <DotmDisplay size={16} dotSize={2} color="#525252" pattern="full" />
               ) : (
                 <span className="w-2 h-2 rounded-full border border-neutral-800 block" />
               )}
               <div>
                 {/* <h2 className="text-white text-[11px] uppercase tracking-widest font-bold leading-tight">
-                  {activeChatId ? activeChatTitle : '// STANDBY'}
+                  {currentChatId ? activeChatTitle : '// STANDBY'}
                 </h2> */}
-                {activeChatId && (
+                {currentChatId && (
                   <p className="text-[9px] text-neutral-700 leading-tight">
-                    {activeChatId.substring(0, 16)}...
+                    {currentChatId.substring(0, 16)}...
                   </p>
                 )}
               </div>
@@ -338,7 +340,7 @@ const Dashboard = () => {
               </div>
             )}
             <span className="text-[9px] text-neutral-700 font-mono">
-              {activeChatId ? (
+              {currentChatId ? (
                 <span className="text-neutral-500">● ACTIVE</span>
               ) : (
                 <span>○ STANDBY</span>
@@ -349,7 +351,7 @@ const Dashboard = () => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5 min-h-0">
-          {!activeChatId && messages.length === 0 ? (
+          {!currentChatId && messages.length === 0 ? (
             /* Welcome Screen */
             <div className="h-full flex flex-col justify-center items-center text-center max-w-lg mx-auto space-y-8 select-none">
 

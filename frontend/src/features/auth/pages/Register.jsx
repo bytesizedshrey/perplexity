@@ -6,6 +6,7 @@ import { DotmSpiral, DotmRipple, DotmDisplay } from '../../../components/DotMatr
 
 const Register = () => {
   const [formData, setFormData] = useState({
+    fullname: '',
     username: '',
     email: '',
     password: '',
@@ -98,6 +99,22 @@ const Register = () => {
 
         {/* Form */}
         <form onSubmit={submitForm} className="space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-[10px] font-mono uppercase tracking-widest text-neutral-600">
+              Full Name
+            </span>
+            <input
+              id="register-fullname"
+              type="text"
+              name="fullname"
+              value={formData.fullname}
+              onChange={handleChange}
+              required
+              placeholder="Operator Name"
+              className="w-full rounded-xl border border-neutral-900 bg-neutral-950/80 px-4 py-3 font-mono text-[12px] text-white placeholder:text-neutral-800 outline-none transition focus:border-neutral-700 focus:ring-1 focus:ring-neutral-800 hover:border-neutral-800"
+            />
+          </label>
+
           <label className="block">
             <span className="mb-2 block text-[10px] font-mono uppercase tracking-widest text-neutral-600">
               Username

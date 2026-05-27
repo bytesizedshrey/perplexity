@@ -5,11 +5,12 @@ import { setUser, setLoading, setError } from "../auth.slice";
 export function useAuth() {
     const dispatch = useDispatch(); // fixed
 
-    async function handleRegister({ email, username, password }) {
+    async function handleRegister({ fullname, email, username, password }) {
         try {
             dispatch(setLoading(true));
 
             const data = await register({
+                fullname,
                 email,
                 username,
                 password,

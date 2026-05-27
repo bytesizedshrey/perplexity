@@ -44,7 +44,7 @@ export async function registerUserController(req, res) {
 
       <p>Verify your email:</p>
 
-      <a href="http://localhost:3000/api/auth/verify-email?token=${emailVerificationToken}">
+      <a href="http://localhost:8000/api/auth/verify-email?token=${emailVerificationToken}">
         Verify Email
       </a>
       `,
@@ -105,7 +105,12 @@ export async function loginUserController(req,res) {
     username : user.username,
   },process.env.JWT_SECRET,{expiresIn: '7d'})
 
-  res.cookie("token",token)
+  res.cookie("token", token, { 
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: 'Strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  })
 
   res.status(200).json({
     message : "Login Successful",
@@ -184,7 +189,7 @@ export async function verifyEmailController(req, res) {
     res.send(`
       <h1>Email Verified Successfully.</h1>
       <p>Your email has been verified. You can now log in.</p>
-      <a href="http://localhost:3000/login">Go To Login</a>
+      <a href="http://localhost:5173/login">Go To Login</a>
     `);
   } catch (error) {
     console.log(error);
