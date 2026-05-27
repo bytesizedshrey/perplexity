@@ -51,13 +51,14 @@ export async function sendMessage(req, res) {
     // Save AI message
     const aiMessage = await messageModel.create({
       chat: chat._id,
-      content: result,
+      content: result.content,
       sender: "ai", // use this if schema enum = ["user", "assistant"]
     });
 
     return res.status(201).json({
       success: true,
-      aiMessage: result,
+      aiMessage: result.content,
+      searchData: result.searchData,
       title: chat.title,
       chat,
       userMessage,

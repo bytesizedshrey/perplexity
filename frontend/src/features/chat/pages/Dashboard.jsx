@@ -375,9 +375,9 @@ const Dashboard = () => {
 
               {/* Title card */}
               <div className="p-7 border border-neutral-900 bg-neutral-950/60 rounded-2xl relative overflow-hidden max-w-sm w-full dot-matrix-panel shadow-[0_0_60px_rgba(255,255,255,0.015)]">
-                <p className="text-[9px] uppercase tracking-[0.5em] text-neutral-600 font-bold">
+                {/* <p className="text-[9px] uppercase tracking-[0.5em] text-neutral-600 font-bold">
                   // HOST_READY
-                </p>
+                </p> */}
                 <h1 className="mt-3 text-lg font-bold text-white uppercase tracking-wider leading-tight">
                   Establish Neural<br />Connection
                 </h1>
